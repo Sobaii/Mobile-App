@@ -1,8 +1,15 @@
-import { StyleSheet, StatusBar } from 'react-native';
+import { StyleSheet, StatusBar, Platform } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 
-export default function HomeScreen() {
+let statusBarHeight = 0;
+if (Platform.OS === 'ios') {
+  statusBarHeight = StatusBar.currentHeight || 20; // Default height for iOS status bar
+} else {
+  statusBarHeight = StatusBar.currentHeight || 0;
+}
+
+export default function DashboardScreen() {
   return (
     <ThemedView style={styles.viewContainer}>
       <ThemedText type="title">Homepage</ThemedText>
@@ -12,9 +19,16 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   viewContainer: {
-    paddingTop: StatusBar.currentHeight,
+    paddingTop: statusBarHeight,
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  title: {
+    fontSize: 24,
+    marginBottom: 20,
+  },
+  card: {
+    marginVertical: 10,
   },
 });
