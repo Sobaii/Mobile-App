@@ -1,6 +1,8 @@
 import { StyleSheet, StatusBar, Platform } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { Link } from 'expo-router';
+import { Button } from 'react-native-paper';
 
 let statusBarHeight = 0;
 if (Platform.OS === 'ios') {
@@ -12,7 +14,10 @@ if (Platform.OS === 'ios') {
 export default function DashboardScreen() {
   return (
     <ThemedView style={styles.viewContainer}>
-      <ThemedText type="title">Homepage</ThemedText>
+      
+      <Link href="/camera-screen" asChild>
+        <Button mode="contained" icon="camera">Upload with camera</Button>
+      </Link>
     </ThemedView>
   );
 }
