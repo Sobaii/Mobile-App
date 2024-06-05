@@ -4,13 +4,7 @@ import { useCameraPermissions, CameraView } from 'expo-camera';
 import { Link } from 'expo-router';
 import { Button, IconButton } from 'react-native-paper';
 import { ThemedView } from '@/components/ThemedView';
-
-let statusBarHeight = 0;
-if (Platform.OS === 'ios') {
-    statusBarHeight = StatusBar.currentHeight || 20; // Default height for iOS status bar
-} else {
-    statusBarHeight = StatusBar.currentHeight || 0;
-}
+import Constants from 'expo-constants';
 
 export default function CameraExample() {
     const [permission, requestPermission] = useCameraPermissions();
@@ -63,7 +57,6 @@ export default function CameraExample() {
 
 const styles = StyleSheet.create({
     screenContainer: {
-        paddingTop: statusBarHeight,
         flex: 1,
         justifyContent: 'center'
     },
@@ -72,12 +65,13 @@ const styles = StyleSheet.create({
     },
     actionContainer: {
         position: 'absolute',
-        bottom: 30,
+        bottom: Constants.statusBarHeight,
         alignSelf: 'center',
         backgroundColor: 'transparent'
     },
     navContainer: {
         position: 'absolute',
+        top: Constants.statusBarHeight,
         alignSelf: 'flex-start',
         backgroundColor: 'transparent'
     }

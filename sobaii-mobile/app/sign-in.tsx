@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, StatusBar, View } from 'react-native'; // Import View
+import { StyleSheet, View } from 'react-native'; // Import View
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useDispatch } from 'react-redux';
@@ -7,6 +7,7 @@ import { AppDispatch } from '@/store';
 import { updateIsAuthenticated } from '@/store/reducers/authSlice';
 import { router } from 'expo-router';
 import { TextInput, Button } from 'react-native-paper';
+import Constants from 'expo-constants';
 
 export default function SignIn() {
     const dispatch = useDispatch<AppDispatch>();
@@ -47,7 +48,7 @@ export default function SignIn() {
 
 const styles = StyleSheet.create({
     viewContainer: {
-        paddingTop: StatusBar.currentHeight,
+        paddingTop: Constants.statusBarHeight,
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
