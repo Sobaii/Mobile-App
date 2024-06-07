@@ -5,8 +5,6 @@ import { SafeAreaProvider } from 'react-native-safe-area-context'
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
-import { Provider } from 'react-redux';
-import { store } from '@/store';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { PaperProvider } from 'react-native-paper';
 
@@ -30,7 +28,6 @@ export default function RootLayout() {
   }
 
   return (
-    <Provider store={store}>
       <PaperProvider>
         <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
           <Stack>
@@ -41,6 +38,5 @@ export default function RootLayout() {
           </Stack>
         </ThemeProvider>
       </PaperProvider>
-    </Provider>
   );
 }

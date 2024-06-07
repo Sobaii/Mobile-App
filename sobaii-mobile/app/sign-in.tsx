@@ -2,18 +2,16 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native'; // Import View
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { useDispatch } from 'react-redux';
-import { AppDispatch } from '@/store';
-import { updateIsAuthenticated } from '@/store/reducers/authSlice';
 import { router } from 'expo-router';
 import { TextInput, Button } from 'react-native-paper';
 import Constants from 'expo-constants';
+import { useAuthStore } from '@/lib/store';
 
 export default function SignIn() {
-    const dispatch = useDispatch<AppDispatch>();
+    const updateIsAuthenticated = useAuthStore((state) => state.updateIsAuthenticated)
 
     const handleSignIn = () => {
-        dispatch(updateIsAuthenticated(true));
+        updateIsAuthenticated(true)
         router.replace('/');
     };
 

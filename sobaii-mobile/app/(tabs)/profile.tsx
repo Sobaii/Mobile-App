@@ -1,15 +1,12 @@
-import { useDispatch } from 'react-redux';
-import { AppDispatch } from '@/store';
-import { updateIsAuthenticated } from '@/store/reducers/authSlice';
-
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { StyleSheet, TouchableOpacity } from 'react-native';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { useAuthStore } from '@/lib/store';
 
 export default function ProfileScreen() {
-  const dispatch = useDispatch<AppDispatch>();
+  const updateIsAuthenticated = useAuthStore((state) => state.updateIsAuthenticated)
 
   return (
     <ParallaxScrollView
@@ -18,7 +15,7 @@ export default function ProfileScreen() {
       <ThemedView style={styles.titleContainer}>
         <ThemedText type="title">My Profile</ThemedText>
       </ThemedView>
-      <TouchableOpacity onPress={() => dispatch(updateIsAuthenticated(false))}>
+      <TouchableOpacity onPress={() => updateIsAuthenticated(false)}>
         <ThemedText>Logout</ThemedText>
       </TouchableOpacity>
 

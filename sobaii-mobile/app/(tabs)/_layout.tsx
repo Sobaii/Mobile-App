@@ -1,15 +1,13 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { Redirect } from 'expo-router';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/store';
-
 import { TabBarIcon } from '@/components/navigation/TabBarIcon';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { useAuthStore } from '@/lib/store';
 
 export default function TabLayout() {
-  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated)
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const colorScheme = useColorScheme();
 
   if(!isAuthenticated) {
