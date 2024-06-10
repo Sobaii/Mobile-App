@@ -1,5 +1,5 @@
 import { OcrServiceClient } from "../stubs/ocr-service-dev/Ocr_serviceServiceClientPb";
-import { TestRequest, TestResponse } from "../stubs/ocr-service-dev/ocr_service_pb";
+import { TestRequest, TestResponse, ExtractRequest, ExtractResponse } from "../stubs/ocr-service-dev/ocr_service_pb";
 
 const client = new OcrServiceClient('http://10.0.2.2:50052', null, null)
 
@@ -8,12 +8,27 @@ export async function testConnection(message: string): Promise<string> {
     const request = new TestRequest();
     request.setMessage(message);
 
-    client.testConnection(request, {}, (err, response) => {
+    client.testConnection(request, {}, (err, response: TestResponse) => {
       if (err) {
         reject(err);
       } else {
         resolve(response.getResponse());
       }
     });
+  });
+}
+
+export function extractFileData(file: Uint8Array): Promise<ExtractResponse.AsObject | null> {
+  return new Promise((resolve, reject) => {
+    const request = new ExtractRequest();
+    request.setBinary(file);
+
+    client.extractFileData(request, {}, (err, response: ExtractResponse) => {
+        if (err) {
+            reject(null);
+        } else {
+            resolve(response.toObject());
+        }
+    })
   });
 }
