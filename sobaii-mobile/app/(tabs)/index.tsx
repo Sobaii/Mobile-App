@@ -10,7 +10,7 @@ import { extractFileData } from '@/lib/ocr-service/callWrapper';
 import { useExpenseStore } from '@/lib/store';
 
 export default function DashboardScreen() {
-  const updateExpense = useExpenseStore((state) => state.updateExpense)
+  const updateExpenses = useExpenseStore((state) => state.updateExpenses)
 
   const handleFileUpload = async () => {
     const res = await DocumentPicker.getDocumentAsync({ type: '*/*' });
@@ -34,7 +34,7 @@ export default function DashboardScreen() {
           if (!data) {
             return
           }
-          updateExpense(data)
+          updateExpenses(data)
           
         } catch (error) {
           console.error('Error extracting file data:', error);

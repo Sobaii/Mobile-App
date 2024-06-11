@@ -3,10 +3,16 @@ import { StyleSheet, TouchableOpacity } from 'react-native';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { useAuthStore } from '@/lib/store';
+import { useAuthStore, useExpenseStore } from '@/lib/store';
 
 export default function ProfileScreen() {
   const updateIsAuthenticated = useAuthStore((state) => state.updateIsAuthenticated)
+  const clearExpenses = useExpenseStore((state) => state.clearExpenses)  
+
+  const handleLogout = async () => {
+    updateIsAuthenticated(false)
+    clearExpenses()
+  }
 
   return (
     <ParallaxScrollView
@@ -15,7 +21,7 @@ export default function ProfileScreen() {
       <ThemedView style={styles.titleContainer}>
         <ThemedText type="title">My Profile</ThemedText>
       </ThemedView>
-      <TouchableOpacity onPress={() => updateIsAuthenticated(false)}>
+      <TouchableOpacity onPress={handleLogout}>
         <ThemedText>Logout</ThemedText>
       </TouchableOpacity>
 

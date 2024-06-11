@@ -28,15 +28,16 @@ export default function RootLayout() {
   }
 
   return (
-      <PaperProvider>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <Stack>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="sign-in" options={{ headerShown: false }} />
-            <Stack.Screen name="camera-screen" options={{ headerShown: false }} />
-            <Stack.Screen name="+not-found" />
-          </Stack>
-        </ThemeProvider>
-      </PaperProvider>
+    <PaperProvider>
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <Stack>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="sign-in" options={{ headerShown: false }} />
+          <Stack.Screen name="camera-screen" options={{ headerShown: false }} />
+          <Stack.Screen name='expense-manager-screen' />
+          <Stack.Screen name="+not-found" />
+        </Stack>
+      </ThemeProvider>
+    </PaperProvider>
   );
 }
