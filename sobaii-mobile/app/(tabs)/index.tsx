@@ -8,6 +8,7 @@ import Constants from 'expo-constants';
 import * as DocumentPicker from 'expo-document-picker';
 import { extractFileData } from '@/lib/ocr-service/callWrapper';
 import { useExpenseStore } from '@/lib/store';
+import Toast from 'react-native-root-toast';
 
 export default function DashboardScreen() {
   const updateExpenses = useExpenseStore((state) => state.updateExpenses)
@@ -34,6 +35,11 @@ export default function DashboardScreen() {
           if (!data) {
             return
           }
+          Toast.show('File data successfully extracted.', {
+            duration: Toast.durations.LONG,
+            position: Constants.statusBarHeight + 20
+          });
+
           updateExpenses(data)
           
         } catch (error) {

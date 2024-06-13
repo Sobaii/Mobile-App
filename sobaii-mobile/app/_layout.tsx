@@ -7,6 +7,7 @@ import { useEffect } from 'react';
 import 'react-native-reanimated';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { PaperProvider } from 'react-native-paper';
+import { RootSiblingParent } from 'react-native-root-siblings';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -30,13 +31,15 @@ export default function RootLayout() {
   return (
     <PaperProvider>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="sign-in" options={{ headerShown: false }} />
-          <Stack.Screen name="camera-screen" options={{ headerShown: false }} />
-          <Stack.Screen name='expense-manager-screen' />
-          <Stack.Screen name="+not-found" />
-        </Stack>
+        <RootSiblingParent>
+          <Stack>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="sign-in" options={{ headerShown: false }} />
+            <Stack.Screen name="camera-screen" options={{ headerShown: false }} />
+            <Stack.Screen name='expense-manager-screen' />
+            <Stack.Screen name="+not-found" />
+          </Stack>
+        </RootSiblingParent>
       </ThemeProvider>
     </PaperProvider>
   );

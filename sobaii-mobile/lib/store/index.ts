@@ -8,7 +8,8 @@ type AuthState = {
 };
 
 type ExpenseState = {
-    data: ExtractResponse.AsObject | null;
+    data: ExtractResponse.AsObject[];
+    selectedExpense?: ExtractResponse.AsObject;
 }
 
 export const useAuthStore = create(
@@ -27,16 +28,12 @@ export const useAuthStore = create(
 );
 
 export const useExpenseStore = create(
-    persist(
-        combine(
-            { data: {} } as ExpenseState,
-            (set) => ({
-                updateExpense: (data: ExtractResponse.AsObject | null) => set(() => ({data: data})),
-            })
-        ),
-        {
-            name: 'expense-storage',
-            storage: secureStorage,
-        }
+    combine(
+        { data: [] } as ExpenseState,
+        (set) => ({
+            updateExpenses: (newData: ExtractResponse.AsObject) => set((state) => ({data: [...state.data, newData]})),
+            clearExpenses: () => set (() => ({data: []})),
+            updateSelectedExpense: (target: ExtractResponse.AsObject) => set (() => ({selectedExpense: target}))
+        })
     )
 );
