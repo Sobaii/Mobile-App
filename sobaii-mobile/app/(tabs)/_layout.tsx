@@ -4,13 +4,13 @@ import { Redirect } from 'expo-router';
 import { TabBarIcon } from '@/components/navigation/TabBarIcon';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { useAuthStore } from '@/lib/store';
+import { useAuth } from '@clerk/clerk-expo';
 
 export default function TabLayout() {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const { isSignedIn } = useAuth();
   const colorScheme = useColorScheme();
 
-  if(!isAuthenticated) {
+  if(!isSignedIn) {
     return <Redirect href="/sign-in" />;
   }
 

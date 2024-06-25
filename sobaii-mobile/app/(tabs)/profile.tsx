@@ -3,15 +3,23 @@ import { StyleSheet, TouchableOpacity } from 'react-native';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { useAuthStore, useExpenseStore } from '@/lib/store';
+import { useExpenseStore } from '@/lib/store';
+import { useAuth } from '@clerk/clerk-expo';
+import { router } from 'expo-router';
 
 export default function ProfileScreen() {
-  const updateIsAuthenticated = useAuthStore((state) => state.updateIsAuthenticated)
-  const clearExpenses = useExpenseStore((state) => state.clearExpenses)  
+  const clearExpenses = useExpenseStore((state) => state.clearExpenses)
+  const { signOut } = useAuth();
 
   const handleLogout = async () => {
-    updateIsAuthenticated(false)
-    clearExpenses()
+    try {
+      await signOut()
+      clearExpenses()
+    }
+    catch (err: any) {
+      console.error(JSON.stringify(err, null, 2));
+      return
+    }
   }
 
   return (

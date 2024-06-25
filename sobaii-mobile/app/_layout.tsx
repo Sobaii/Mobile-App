@@ -8,9 +8,17 @@ import 'react-native-reanimated';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { PaperProvider } from 'react-native-paper';
 import { RootSiblingParent } from 'react-native-root-siblings';
+import { ClerkProvider, ClerkLoaded } from "@clerk/clerk-expo"
+import { tokenCache } from '@/lib/clerk/tokenCache';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
+
+const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
+
+if (!publishableKey) {
+  throw new Error('Missing Publishable Key. Please set EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in your .env')
+}
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -29,18 +37,23 @@ export default function RootLayout() {
   }
 
   return (
-    <PaperProvider>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <RootSiblingParent>
-          <Stack>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="sign-in" options={{ headerShown: false }} />
-            <Stack.Screen name="camera-screen" options={{ headerShown: false }} />
-            <Stack.Screen name='expense-manager-screen' />
-            <Stack.Screen name="+not-found" />
-          </Stack>
-        </RootSiblingParent>
-      </ThemeProvider>
-    </PaperProvider>
+    <ClerkProvider tokenCache={tokenCache} publishableKey={publishableKey}>
+      <ClerkLoaded>
+        <PaperProvider>
+          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+            <RootSiblingParent>
+              <Stack>
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen name="sign-in" options={{ headerShown: false }} />
+                <Stack.Screen name="sign-up" options={{ headerShown: false }} />
+                <Stack.Screen name="camera-screen" options={{ headerShown: false }} />
+                <Stack.Screen name='expense-manager-screen' />
+                <Stack.Screen name="+not-found" />
+              </Stack>
+            </RootSiblingParent>
+          </ThemeProvider>
+        </PaperProvider>
+      </ClerkLoaded>
+    </ClerkProvider>
   );
 }

@@ -1,7 +1,7 @@
 import { OcrServiceClient } from "../stubs/ocr-service-dev/Ocr_serviceServiceClientPb";
 import { TestRequest, TestResponse, ExtractRequest, ExtractResponse } from "../stubs/ocr-service-dev/ocr_service_pb";
 
-const client = new OcrServiceClient('http://10.0.2.2:50052', null, null)
+const client = new OcrServiceClient('http://localhost:50052', null, null)
 
 export async function testConnection(message: string): Promise<string> {
   return new Promise((resolve, reject) => {
