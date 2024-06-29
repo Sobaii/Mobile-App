@@ -1,11 +1,12 @@
 import React, { useCallback, useState } from 'react';
-import { StyleSheet, TouchableOpacity, View, Text } from 'react-native';
+import { StyleSheet, TouchableOpacity, View, Text, useColorScheme, TextInput } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { router } from 'expo-router';
 import { useSignIn } from '@clerk/clerk-expo';
-import { TextInput, Button } from 'react-native-paper';
 import Constants from 'expo-constants';
+import { Colors } from '@/constants/Colors';
+import OauthButton from '@/components/auth/OauthButton';
 
 export default function SignIn() {
 
@@ -13,7 +14,7 @@ export default function SignIn() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
 
-    const handleSignIn = useCallback(async() => {
+    const handleSignIn = useCallback(async () => {
         if (!isLoaded) {
             return;
         }
@@ -37,37 +38,35 @@ export default function SignIn() {
         }
     }, [isLoaded, email, password])
 
+    const colorScheme = useColorScheme()
+    const styles = getStyles(colorScheme === "dark")
+
     return (
         <ThemedView style={styles.viewContainer}>
-            <ThemedText type="title">Sobaii</ThemedText>
+            <ThemedText type="title" style={{ marginVertical: 30 }}>Sobaii</ThemedText>
             <TextInput
-                label="Email"
-                mode="outlined"
                 style={styles.input}
                 value={email}
-                onChangeText={email => setEmail(email)}
+                placeholder='Email'
+                placeholderTextColor={colorScheme === "dark" ? '#FFF' : '#6b7280'}
+                onChangeText={setEmail}
             />
             <TextInput
-                label="Password"
-                mode="outlined"
                 secureTextEntry
                 style={styles.input}
                 value={password}
-                onChangeText={password => setPassword(password)}
+                placeholder='Password'
+                placeholderTextColor={colorScheme === "dark" ? '#FFF' : '#6b7280'}
+                onChangeText={setPassword}
             />
-            <Button mode="contained-tonal" onPress={handleSignIn} style={styles.button}>
-                Sign In
-            </Button>
+            <TouchableOpacity onPress={handleSignIn} style={styles.button}>
+                <Text style={styles.authText}>Sign In</Text>
+            </TouchableOpacity>
 
             <View style={styles.divider} />
-            <Button mode="contained" onPress={handleSignIn} style={styles.button}>
-                Sign in with Google
-            </Button>
-            <Button mode="contained" onPress={handleSignIn} style={styles.button}>
-                Sign in with Github
-            </Button>
-            <TouchableOpacity onPress={() => router.replace('/sign-up')} style={styles.button}>
-                <Text style={{ textDecorationLine: 'underline' }}>
+            <OauthButton />
+            <TouchableOpacity onPress={() => router.replace('/sign-up')} style={{ marginVertical: 10 }}>
+                <Text style={{ ...styles.authText, textDecorationLine: 'underline' }}>
                     New user? Sign up instead
                 </Text>
             </TouchableOpacity>
@@ -75,28 +74,58 @@ export default function SignIn() {
     );
 }
 
-const styles = StyleSheet.create({
-    viewContainer: {
-        paddingTop: Constants.statusBarHeight,
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    input: {
-        width: '80%',
-        marginVertical: 10,
-    },
-    button: {
-        width: '80%',
-        marginVertical: 10,
-        textAlign: 'center',
-        flexDirection: 'row',
-        justifyContent: 'center'
-    },
-    divider: {
-        height: 1,
-        width: '60%',
-        backgroundColor: 'gray',
-        marginVertical: 30,
-    },
-});
+export const getStyles = (isDark: boolean) => {
+    const c = isDark ? Colors.dark : Colors.light
+
+    const styles = StyleSheet.create({
+        viewContainer: {
+            paddingTop: Constants.statusBarHeight,
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+        },
+        input: {
+            width: '80%',
+            margin: 10,
+            borderWidth: 1,
+            paddingLeft: 15,
+            padding: 10,
+            borderRadius: 5,
+            borderColor: c.border,
+            color: c.text
+        },
+        button: {
+            width: '80%',
+            backgroundColor: c.secondary,
+            borderRadius: 50,
+            marginVertical: 10,
+            paddingVertical: 12,
+            flexDirection: 'row',
+            justifyContent: 'center'
+        },
+        destructiveButton: {
+            width: '80%',
+            backgroundColor: c.destructive,
+            borderRadius: 50,
+            marginVertical: 10,
+            paddingVertical: 12,
+            flexDirection: 'row',
+            justifyContent: 'center'
+        },
+        destructiveText: {
+            color: c.secondary,
+            fontWeight: '500'
+        },
+        divider: {
+            height: 1,
+            width: '60%',
+            backgroundColor: c.border,
+            marginVertical: 30,
+        },
+        authText: {
+            color: c.text,
+            fontWeight: '500'
+        }
+    });
+    return styles
+}

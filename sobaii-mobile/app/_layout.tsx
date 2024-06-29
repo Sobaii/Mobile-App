@@ -6,6 +6,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { NavLightTheme, NavDarkTheme } from '@/constants/Colors';
 import { PaperProvider } from 'react-native-paper';
 import { RootSiblingParent } from 'react-native-root-siblings';
 import { ClerkProvider, ClerkLoaded } from "@clerk/clerk-expo"
@@ -40,7 +41,7 @@ export default function RootLayout() {
     <ClerkProvider tokenCache={tokenCache} publishableKey={publishableKey}>
       <ClerkLoaded>
         <PaperProvider>
-          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <ThemeProvider value={colorScheme === 'dark' ? NavDarkTheme : NavLightTheme}>
             <RootSiblingParent>
               <Stack>
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

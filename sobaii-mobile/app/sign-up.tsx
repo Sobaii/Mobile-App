@@ -1,29 +1,33 @@
 import React, { useState } from 'react';
-import { StyleSheet, TouchableOpacity, View, Text } from 'react-native';
+import { StyleSheet, TouchableOpacity, View, Text, TextInput, useColorScheme } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { router } from 'expo-router';
-import { TextInput, Button } from 'react-native-paper';
-import Constants from 'expo-constants';
 import { useSignUp } from '@clerk/clerk-expo';
+import OauthButton from '@/components/auth/OauthButton';
+import { getStyles } from './sign-in';
+import Ionicons from '@expo/vector-icons/Ionicons';
 
 export default function SignIn() {
 
     const { isLoaded, signUp, setActive } = useSignUp();
-
+    const [fname, setFname] = useState('')
+    const [lname, setLname] = useState('')
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
     const [pendingVerification, setPendingVerification] = useState(false)
     const [code, setCode] = useState('')
 
-    const handleSignIn = async () => {
+    const handleSignUp = async () => {
         if (!isLoaded) {
             return;
         }
 
         try {
             await signUp.create({
+                firstName: fname,
+                lastName: lname,
                 emailAddress: email,
                 password: password,
             });
@@ -56,89 +60,85 @@ export default function SignIn() {
         }
     };
 
+    const colorScheme = useColorScheme()
+    const styles = getStyles(colorScheme === "dark")
+
     return (
         <ThemedView style={styles.viewContainer}>
             {!pendingVerification ? (
                 <>
-                    <ThemedText type="title">Sobaii</ThemedText>
+                    <ThemedText type="title" style={{ marginVertical: 30 }}>Sobaii</ThemedText>
                     <TextInput
-                        label="Email"
-                        mode="outlined"
                         style={styles.input}
-                        value={email}
-                        onChangeText={email => setEmail(email)}
+                        value={fname}
+                        placeholder='First Name'
+                        placeholderTextColor={colorScheme === "dark" ? '#FFF' : '#6b7280'}
+                        onChangeText={setFname}
                     />
                     <TextInput
-                        label="Password"
-                        mode="outlined"
+                        style={styles.input}
+                        value={lname}
+                        placeholder='Last Name'
+                        placeholderTextColor={colorScheme === "dark" ? '#FFF' : '#6b7280'}
+                        onChangeText={setLname}
+                    />
+                    <TextInput
+                        style={styles.input}
+                        value={email}
+                        placeholder='Email'
+                        placeholderTextColor={colorScheme === "dark" ? '#FFF' : '#6b7280'}
+                        onChangeText={setEmail}
+                    />
+                    <TextInput
                         secureTextEntry
                         style={styles.input}
                         value={password}
-                        onChangeText={password => setPassword(password)}
+                        placeholder='Password'
+                        placeholderTextColor={colorScheme === "dark" ? '#FFF' : '#6b7280'}
+                        onChangeText={setPassword}
                     />
                     <TextInput
-                        label="Confirm Password"
-                        mode="outlined"
                         secureTextEntry
                         style={styles.input}
                         value={confirmPassword}
-                        onChangeText={confirmPassword => setConfirmPassword(confirmPassword)}
+                        placeholder='Confirm Password'
+                        placeholderTextColor={colorScheme === "dark" ? '#FFF' : '#6b7280'}
+                        onChangeText={setConfirmPassword}
                     />
-                    <Button mode="contained-tonal" onPress={handleSignIn} style={styles.button}>
-                        Sign Up
-                    </Button>
+                    <TouchableOpacity onPress={handleSignUp} style={styles.button}>
+                        <Text style={styles.authText}>Sign Up</Text>
+                    </TouchableOpacity>
 
                     <View style={styles.divider} />
-                    <Button mode="contained" onPress={handleSignIn} style={styles.button}>
-                        Sign up with Google
-                    </Button>
-                    <Button mode="contained" onPress={handleSignIn} style={styles.button}>
-                        Sign up with Github
-                    </Button>
-                    <TouchableOpacity onPress={() => router.replace('/sign-in')} style={styles.button}>
-                        <Text style={{ textDecorationLine: 'underline' }}>
+                    <OauthButton />
+                    <TouchableOpacity onPress={() => router.replace('/sign-in')} style={{ marginVertical: 10 }}>
+                        <Text style={{ ...styles.authText, textDecorationLine: 'underline' }}>
                             Existing user? Sign in instead
                         </Text>
                     </TouchableOpacity>
                 </>
             ) : (
                 <>
+                    <Ionicons name="mail-unread-outline" size={60} style={styles.authText} />
+                    <ThemedText type='subtitle'>Verify your email</ThemedText>
+                    <ThemedText type='default' style={{ width: '80%', textAlign: 'center', marginBottom: 30 }}>Enter the code we sent to your email address to verify your new account.</ThemedText>
+
                     <TextInput
                         value={code}
+                        style={styles.input}
                         placeholder="Code..."
-                        onChangeText={(code) => setCode(code)}
+                        placeholderTextColor={colorScheme === "dark" ? '#FFF' : '#6b7280'}
+                        onChangeText={setCode}
                     />
-                    <Button onPress={handleVerifyEmail}>
-                        Verify Email
-                    </Button>
+                    <View style={styles.divider} />
+                    <TouchableOpacity onPress={handleVerifyEmail} style={styles.button}>
+                        <Text style={styles.authText}>Verify Email</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => setPendingVerification(false)} style={styles.destructiveButton}>
+                        <Text style={styles.destructiveText}>Cancel Sign up</Text>
+                    </TouchableOpacity>
                 </>
             )}
         </ThemedView>
     );
 }
-
-const styles = StyleSheet.create({
-    viewContainer: {
-        paddingTop: Constants.statusBarHeight,
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    input: {
-        width: '80%',
-        marginVertical: 10,
-    },
-    button: {
-        width: '80%',
-        marginVertical: 10,
-        textAlign: 'center',
-        flexDirection: 'row',
-        justifyContent: 'center'
-    },
-    divider: {
-        height: 1,
-        width: '60%',
-        backgroundColor: 'gray',
-        marginVertical: 30,
-    },
-});
