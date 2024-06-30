@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react';
-import { Text, StyleSheet, StatusBar, Platform } from 'react-native';
+import { Text, StyleSheet } from 'react-native';
 import { useCameraPermissions, CameraView } from 'expo-camera';
 import { Link } from 'expo-router';
-import { Button, IconButton } from 'react-native-paper';
 import { ThemedView } from '@/components/ThemedView';
 import Constants from 'expo-constants';
+import Ionicons from '@expo/vector-icons/Ionicons';
 
 export default function CameraExample() {
     const [permission, requestPermission] = useCameraPermissions();
@@ -33,21 +33,11 @@ export default function CameraExample() {
                 <CameraView style={styles.camera}>
                     <ThemedView style={styles.navContainer}>
                         <Link href='/' asChild>
-                            <IconButton
-                                icon="backburger"
-                                iconColor='#FFFFFF'
-                                size={45}
-                            />
+                            <Ionicons name="arrow-back-outline" size={64} color={'#fff'} />
                         </Link>
                     </ThemedView>
                     <ThemedView style={styles.actionContainer}>
-                        <IconButton
-                            icon="camera-iris"
-                            iconColor='#FFFFFF'
-                            mode='outlined'
-                            size={60}
-                            onPress={() => console.log('Pressed')}
-                        />
+                        <Ionicons name="radio-button-on-outline" size={96} color={'#fff'} />
                     </ThemedView>
                 </CameraView>
             </ThemedView>

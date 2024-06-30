@@ -1,10 +1,15 @@
-import { View, ScrollView, StyleSheet } from "react-native";
+import { View, Text, ScrollView, StyleSheet, useColorScheme, TouchableOpacity } from "react-native";
 import { Stack } from "expo-router";
-import { Text, Card, Divider } from "react-native-paper";
 import { useExpenseStore } from "@/lib/store";
+import { Colors } from "@/constants/Colors";
+import { ThemedText } from "@/components/ThemedText";
+import Ionicons from "@expo/vector-icons/Ionicons";
 
 export default function ExpenseManagerScreen() {
     const selectedExpense = useExpenseStore((state) => state.selectedExpense);
+
+    const colorScheme = useColorScheme();
+    const styles = getStyles(colorScheme === 'dark');
 
     if (!selectedExpense) {
         return (
@@ -20,40 +25,62 @@ export default function ExpenseManagerScreen() {
             <ScrollView style={styles.container}>
                 {Object.entries(selectedExpense).map(([key, value]) => (
                     value?.text && (
-                        <Card key={key} mode="outlined" style={{marginBottom: 8}}>
-                            <Card.Content>
-                                <Text style={styles.cardTitle}>{key}</Text>
-                                <Text>{value.text}</Text>
-                                <Text style={styles.cardSubtitle}>Confidence: {value.confidence}%</Text>
-                            </Card.Content>
-                        </Card>
+                        <View key={key} style={{ ...styles.cardContainer, marginBottom: 6 }}>
+                            <TouchableOpacity style={styles.info}>
+                                <ThemedText style={{ fontSize: 12 }}>{key}</ThemedText>
+                                <Ionicons name="create-outline" size={24} style={styles.actionText} />
+                            </TouchableOpacity>
+                            <ThemedText>{value.text}</ThemedText>
+                            <View style={{ ...styles.badge, alignSelf: 'flex-start' }}>
+                                <ThemedText style={{ fontSize: 12 }}>Confidence: {value.confidence}%</ThemedText>
+                            </View>
+                        </View>
                     )
                 ))}
             </ScrollView>
         </>
-
     );
 }
 
-const styles = StyleSheet.create({
-    emptyContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    container: {
-        flex: 1,
-        paddingTop: 8,
-        paddingLeft: 8,
-        paddingRight: 8,
-    },
-    cardTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginBottom: 8,
-    },
-    cardSubtitle: {
-        fontSize: 14,
-        color: 'gray',
-    },
-});
+const getStyles = (isDark: boolean) => {
+    const c = isDark ? Colors.dark : Colors.light;
+
+    const styles = StyleSheet.create({
+        emptyContainer: {
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        container: {
+            flex: 1,
+            gap: 12,
+            padding: 6
+        },
+        cardContainer: {
+            paddingHorizontal: 12,
+            paddingVertical: 12,
+            borderRadius: 5,
+            borderWidth: 1,
+            borderColor: c.border,
+            gap: 12
+        },
+        info: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+        },
+        badge: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: c.secondary,
+            paddingHorizontal: 12,
+            borderRadius: 50,
+        },
+        actionText: {
+            color: c.text,
+            fontWeight: '500'
+        }
+    });
+
+    return styles;
+};

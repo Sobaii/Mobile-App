@@ -67,7 +67,7 @@ export default function ProfileScreen() {
   );
 }
 
-export const getStyles = (isDark: boolean) => {
+const getStyles = (isDark: boolean) => {
   const c = isDark ? Colors.dark : Colors.light
 
   const styles = StyleSheet.create({

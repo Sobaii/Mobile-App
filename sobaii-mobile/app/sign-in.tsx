@@ -74,7 +74,7 @@ export default function SignIn() {
     );
 }
 
-export const getStyles = (isDark: boolean) => {
+const getStyles = (isDark: boolean) => {
     const c = isDark ? Colors.dark : Colors.light
 
     const styles = StyleSheet.create({

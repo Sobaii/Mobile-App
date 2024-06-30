@@ -1,13 +1,11 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
-import { SafeAreaProvider } from 'react-native-safe-area-context'
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { NavLightTheme, NavDarkTheme } from '@/constants/Colors';
-import { PaperProvider } from 'react-native-paper';
 import { RootSiblingParent } from 'react-native-root-siblings';
 import { ClerkProvider, ClerkLoaded } from "@clerk/clerk-expo"
 import { tokenCache } from '@/lib/clerk/tokenCache';
@@ -40,20 +38,18 @@ export default function RootLayout() {
   return (
     <ClerkProvider tokenCache={tokenCache} publishableKey={publishableKey}>
       <ClerkLoaded>
-        <PaperProvider>
-          <ThemeProvider value={colorScheme === 'dark' ? NavDarkTheme : NavLightTheme}>
-            <RootSiblingParent>
-              <Stack>
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                <Stack.Screen name="sign-in" options={{ headerShown: false }} />
-                <Stack.Screen name="sign-up" options={{ headerShown: false }} />
-                <Stack.Screen name="camera-screen" options={{ headerShown: false }} />
-                <Stack.Screen name='expense-manager-screen' />
-                <Stack.Screen name="+not-found" />
-              </Stack>
-            </RootSiblingParent>
-          </ThemeProvider>
-        </PaperProvider>
+        <ThemeProvider value={colorScheme === 'dark' ? NavDarkTheme : NavLightTheme}>
+          <RootSiblingParent>
+            <Stack>
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="sign-in" options={{ headerShown: false }} />
+              <Stack.Screen name="sign-up" options={{ headerShown: false }} />
+              <Stack.Screen name="camera-screen" options={{ headerShown: false }} />
+              <Stack.Screen name='expense-manager-screen' />
+              <Stack.Screen name="+not-found" />
+            </Stack>
+          </RootSiblingParent>
+        </ThemeProvider>
       </ClerkLoaded>
     </ClerkProvider>
   );
