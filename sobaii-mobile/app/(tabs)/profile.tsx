@@ -6,6 +6,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { useExpenseStore } from '@/lib/store';
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import { Colors } from '@/constants/Colors';
+import { router } from 'expo-router';
 
 export default function ProfileScreen() {
   const clearExpenses = useExpenseStore((state) => state.clearExpenses)
@@ -26,8 +27,8 @@ export default function ProfileScreen() {
   const colorScheme = useColorScheme()
   const styles = getStyles(colorScheme === 'dark')
 
-  const renderItem = (iconName: any, title: string) => (
-    <TouchableOpacity style={styles.itemContainer}>
+  const renderItem = (iconName: any, title: string, screen: string) => (
+    <TouchableOpacity onPress={() => router.push(`/${screen}`)} style={styles.itemContainer}>
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         <Ionicons name={iconName} size={24} style={{ ...styles.itemDescription, marginRight: 10 }} />
         <Text style={styles.itemDescription}>{title}</Text>
@@ -58,10 +59,9 @@ export default function ProfileScreen() {
         </TouchableOpacity>
       </View>
       <View style={styles.section}>
-        {renderItem('list-circle-outline', 'Account Details')}
-        {renderItem('cog-outline', 'Settings')}
-        {renderItem('wallet-outline', 'Sobaii Wallet')}
-        {renderItem('shield-checkmark-outline', 'Authorized Services')}
+        {renderItem('list-circle-outline', 'Identity Configuration', 'identity-configuration-screen')}
+        {renderItem('cog-outline', 'App Settings', 'app-settings-screen')}
+        {renderItem('wallet-outline', 'Sobaii Wallet', 'wallet-screen')}
       </View>
     </ParallaxScrollView>
   );

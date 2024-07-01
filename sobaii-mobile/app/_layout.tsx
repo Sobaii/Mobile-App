@@ -46,6 +46,9 @@ export default function RootLayout() {
               <Stack.Screen name="sign-up" options={{ headerShown: false }} />
               <Stack.Screen name="camera-screen" options={{ headerShown: false }} />
               <Stack.Screen name='expense-manager-screen' />
+              <Stack.Screen name='identity-configuration-screen' />
+              <Stack.Screen name='app-settings-screen' />
+              <Stack.Screen name='wallet-screen' />
               <Stack.Screen name="+not-found" />
             </Stack>
           </RootSiblingParent>
