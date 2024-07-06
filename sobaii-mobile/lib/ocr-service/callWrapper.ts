@@ -1,5 +1,5 @@
 import { OcrServiceClient } from "../stubs/ocr-service-dev/Ocr_serviceServiceClientPb";
-import { TestRequest, TestResponse, ExtractRequest, ExtractResponse } from "../stubs/ocr-service-dev/ocr_service_pb";
+import { TestRequest, TestResponse, ExtractRequest, SearchRequest, ExtractResponse, Expenses } from "../stubs/ocr-service-dev/ocr_service_pb";
 
 const client = new OcrServiceClient('http://localhost:50052', null, null)
 
@@ -31,4 +31,22 @@ export function extractFileData(file: Uint8Array): Promise<ExtractResponse.AsObj
         }
     })
   });
+}
+
+export function retrieveExpenses(): Promise<Expenses.AsObject | null> {
+  
+  return new Promise((resolve, reject) => {
+    const request = new SearchRequest()
+    request.setIndex("")
+    request.setQuery("")
+
+    client.searchFileData(request, {}, (err, response: Expenses) => {
+      if (err) {
+        reject(null)
+      } else {
+        resolve(response.toObject())
+      }
+    })
+  })
+
 }

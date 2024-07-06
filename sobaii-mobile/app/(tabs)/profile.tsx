@@ -9,14 +9,14 @@ import { Colors } from '@/constants/Colors';
 import { router } from 'expo-router';
 
 export default function ProfileScreen() {
-  const clearExpenses = useExpenseStore((state) => state.clearExpenses)
+  const setExpenses = useExpenseStore((state) => state.setExpenses)
   const { signOut } = useAuth();
   const { user } = useUser();
 
   const handleLogout = async () => {
     try {
       await signOut()
-      clearExpenses()
+      setExpenses([])
     }
     catch (err: any) {
       console.error(JSON.stringify(err, null, 2));

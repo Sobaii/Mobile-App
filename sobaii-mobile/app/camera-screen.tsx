@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
-import { Text, StyleSheet } from 'react-native';
+import { Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useCameraPermissions, CameraView } from 'expo-camera';
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
 import { ThemedView } from '@/components/ThemedView';
 import Constants from 'expo-constants';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -32,9 +32,9 @@ export default function CameraExample() {
             <ThemedView style={styles.screenContainer}>
                 <CameraView style={styles.camera}>
                     <ThemedView style={styles.navContainer}>
-                        <Link href='/' asChild>
+                        <TouchableOpacity onPress={() => router.back()}>
                             <Ionicons name="arrow-back-outline" size={64} color={'#fff'} />
-                        </Link>
+                        </TouchableOpacity>
                     </ThemedView>
                     <ThemedView style={styles.actionContainer}>
                         <Ionicons name="radio-button-on-outline" size={96} color={'#fff'} />

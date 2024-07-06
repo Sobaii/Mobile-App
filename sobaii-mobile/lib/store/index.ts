@@ -11,8 +11,10 @@ export const useExpenseStore = create(
     combine(
         { data: [] } as ExpenseState,
         (set) => ({
+            setExpenses: (newData: ExtractResponse.AsObject[]) => set(() => ({data: newData})),
+            
             updateExpenses: (newData: ExtractResponse.AsObject) => set((state) => ({data: [...state.data, newData]})),
-            clearExpenses: () => set (() => ({data: []})),
+        
             updateSelectedExpense: (target: ExtractResponse.AsObject) => set (() => ({selectedExpense: target}))
         })
     )

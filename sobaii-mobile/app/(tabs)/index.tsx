@@ -17,7 +17,7 @@ export default function DashboardScreen() {
   const { user } = useUser();
 
   const handleFileUpload = async () => {
-    const res = await DocumentPicker.getDocumentAsync({ type: '*/*' });
+    const res = await DocumentPicker.getDocumentAsync({ type: 'application/pdf' });
     if (res.canceled) {
       return;
     }

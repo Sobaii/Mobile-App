@@ -4,6 +4,7 @@ import { useExpenseStore } from "@/lib/store";
 import { Colors } from "@/constants/Colors";
 import { ThemedText } from "@/components/ThemedText";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { ExpenseField } from "@/lib/stubs/ocr-service-dev/ocr_service_pb";
 
 export default function ExpenseManagerScreen() {
     const selectedExpense = useExpenseStore((state) => state.selectedExpense);
@@ -23,20 +24,27 @@ export default function ExpenseManagerScreen() {
         <>
             <Stack.Screen options={{ title: 'Expense Manager' }} />
             <ScrollView style={styles.container}>
-                {Object.entries(selectedExpense).map(([key, value]) => (
-                    value?.text && (
-                        <View key={key} style={{ ...styles.cardContainer, marginBottom: 6 }}>
-                            <TouchableOpacity style={styles.info}>
-                                <ThemedText style={{ fontSize: 12 }}>{key}</ThemedText>
-                                <Ionicons name="create-outline" size={24} style={styles.actionText} />
-                            </TouchableOpacity>
-                            <ThemedText>{value.text}</ThemedText>
-                            <View style={{ ...styles.badge, alignSelf: 'flex-start' }}>
-                                <ThemedText style={{ fontSize: 12 }}>Confidence: {value.confidence}%</ThemedText>
-                            </View>
-                        </View>
-                    )
-                ))}
+                {Object.entries(selectedExpense)
+                    .map(([key, value]) => {
+                        const expenseValue = value as ExpenseField.AsObject
+                        return (
+                            expenseValue?.text && (
+                                <View key={key} style={{ ...styles.cardContainer, marginBottom: 6 }}>
+                                    <TouchableOpacity style={styles.info}>
+                                        <ThemedText style={{ fontSize: 12 }}>{key}</ThemedText>
+                                        <Ionicons name="create-outline" size={24} style={styles.actionText} />
+                                    </TouchableOpacity>
+                                    <ThemedText>{expenseValue.text}</ThemedText>
+                                    <View style={{ ...styles.badge, alignSelf: 'flex-start' }}>
+                                        <ThemedText style={{ fontSize: 12 }}>
+                                            Confidence: {Math.round((expenseValue.confidence + Number.EPSILON) * 100) / 100}%
+                                        </ThemedText>
+                                    </View>
+                                </View>
+                            )
+                        )
+                    })}
+
             </ScrollView>
         </>
     );

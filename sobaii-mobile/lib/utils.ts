@@ -5,18 +5,23 @@ export function computeAvgExpenseConfidence(expense: ExtractResponse.AsObject): 
     let count = 0;
 
     for (const key in expense) {
-        if (expense.hasOwnProperty(key)) {
-            const field = expense[key as keyof ExtractResponse.AsObject];
-            if (field && field.confidence !== undefined) {
-                sum += field.confidence;
-                count++;
-            }
+        if (!expense.hasOwnProperty(key)) {
+            continue
         }
+        const field = expense[key as keyof ExtractResponse.AsObject];
+        if(!field || field instanceof String || typeof field === 'string') {
+            continue
+        }
+        if((field.text === "" && field.confidence === 0)) {
+            continue
+        }
+        sum += field.confidence;
+        count++;
     }
 
     if (count === 0) {
         return 0;
     }
 
-    return (sum / count) * 100;
+    return Math.round(((sum / count) + Number.EPSILON) * 100) / 100;
 }
