@@ -2,13 +2,12 @@ import { Modal, StyleSheet, TouchableOpacity, useColorScheme, Text, View, Scroll
 import { ThemedView } from '@/components/ThemedView';
 import * as WebBrowser from 'expo-web-browser'
 import * as DocumentPicker from 'expo-document-picker';
-import * as FileSystem from 'expo-file-system';
 import Constants from 'expo-constants';
 import { useExpenseStore } from '@/lib/store';
 import { computeAvgExpenseConfidence } from '@/lib/utils';
 import { Link, router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createFolder, extractFileData, retrieveExpenses, retrieveFolders } from '@/lib/ocr-service/callWrapper';
 import { MimeType } from '@/lib/stubs/ocr-service-dev/ocr_service_pb';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -44,27 +43,6 @@ export default function ExpensesScreen() {
     const [isUploading, setIsUploading] = useState(false)
     const [newFolderCreation, setNewFolderCreation] = useState(false);
     const [folderName, setFolderName] = useState('');
-
-    const getMimeType = async (uri: string): Promise<string> => {
-        const fileInfo = await FileSystem.getInfoAsync(uri, { size: true, md5: true });
-        if (fileInfo.exists) {
-            const contentUri = await FileSystem.getContentUriAsync(uri);
-            const extension = contentUri.split('.').pop()?.toLowerCase();
-            switch (extension) {
-                case 'pdf':
-                    return 'application/pdf';
-                case 'jpg':
-                case 'jpeg':
-                    return 'image/jpeg';
-                case 'png':
-                    return 'image/png';
-                default:
-                    return 'application/octet-stream';
-            }
-        } else {
-            throw new Error('File does not exist');
-        }
-    };
 
     const handleCreateFolder = async () => {
         if (!user?.firstName || !user.lastName || !user.emailAddresses) {
