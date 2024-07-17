@@ -1,14 +1,14 @@
-import { ExtractResponse } from "./stubs/ocr-service-dev/ocr_service_pb";
+import { ExpenseItem, FileExtract } from "./stubs/ocr-service-dev/ocr_service_pb";
 
-export function computeAvgExpenseConfidence(expense: ExtractResponse.AsObject): number {
+export function computeAvgExpenseConfidence(expense: ExpenseItem.AsObject): number {
     let sum = 0;
     let count = 0;
 
-    for (const key in expense) {
-        if (!expense.hasOwnProperty(key)) {
+    for (const key in expense.data) {
+        if (!expense.data.hasOwnProperty(key)) {
             continue
         }
-        const field = expense[key as keyof ExtractResponse.AsObject];
+        const field = expense.data[key as keyof FileExtract.AsObject];
         if(!field || field instanceof String || typeof field === 'string') {
             continue
         }

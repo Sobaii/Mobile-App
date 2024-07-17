@@ -1,72 +1,105 @@
-import { Modal, StyleSheet, TouchableOpacity, useColorScheme, Text, View, Animated, TextInput, ScrollView, Image, ActivityIndicator } from 'react-native';
+import { Modal, StyleSheet, TouchableOpacity, useColorScheme, Text, View, ScrollView, ActivityIndicator, TextInput, Image } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import * as WebBrowser from 'expo-web-browser'
 import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system';
 import Constants from 'expo-constants';
 import { useExpenseStore } from '@/lib/store';
 import { computeAvgExpenseConfidence } from '@/lib/utils';
-import { Link } from 'expo-router';
-import { useEffect, useState, useRef } from 'react';
-import { extractFileData, retrieveExpenses } from '@/lib/ocr-service/callWrapper';
+import { Link, router } from 'expo-router';
+import { useUser } from '@clerk/clerk-expo';
+import { useEffect, useMemo, useState } from 'react';
+import { createFolder, extractFileData, retrieveExpenses, retrieveFolders } from '@/lib/ocr-service/callWrapper';
+import { MimeType } from '@/lib/stubs/ocr-service-dev/ocr_service_pb';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Colors } from '@/constants/Colors';
 import { ThemedText } from '@/components/ThemedText';
 import Toast from 'react-native-root-toast';
 
 export default function ExpensesScreen() {
-    const expenseData = useExpenseStore((state) => state.data);
-    const updateSelectedExpense = useExpenseStore((state) => state.updateSelectedExpense);
-    const setExpenses = useExpenseStore((state) => state.setExpenses);
-    const updateExpenses = useExpenseStore((state) => state.updateExpenses)
+    const { user } = useUser();
+
+    const {
+        expenses,
+        setExpenses,
+        updateExpenses,
+        updateSelectedExpense,
+        fileSelection,
+        setFileSelection,
+        folders,
+        setFolders,
+        updateFolders
+    } = useExpenseStore((state) => ({
+        expenses: state.expenses,
+        setExpenses: state.setExpenses,
+        updateExpenses: state.updateExpenses,
+        updateSelectedExpense: state.updateSelectedExpense,
+        fileSelection: state.fileSelection,
+        setFileSelection: state.setFileSelection,
+        folders: state.folders,
+        setFolders: state.setFolders,
+        updateFolders: state.updateFolders
+    }));
+
     const [isUploading, setIsUploading] = useState(false)
+    const [newFolderCreation, setNewFolderCreation] = useState(false);
+    const [folderName, setFolderName] = useState('');
 
-    const handleFileUpload = async () => {
-        const res = await DocumentPicker.getDocumentAsync({ type: 'application/pdf' });
-        if (res.canceled) {
-            return;
-        }
-
-        try {
-            setIsUploading(true)
-            // Read the file content as Uint8Array using FileReader
-            const response = await fetch(res.assets[0].uri);
-            const blob = await response.blob();
-            const reader = new FileReader();
-
-            reader.onloadend = async () => {
-                const arrayBuffer = reader.result as ArrayBuffer;
-                const uint8Array = new Uint8Array(arrayBuffer);
-
-                // Perform extractFileData
-                try {
-                    const data = await extractFileData(uint8Array);
-                    if (!data) {
-                        return
-                    }
-                    Toast.show('File data successfully extracted.', {
-                        duration: Toast.durations.SHORT,
-                        position: Constants.statusBarHeight + 20
-                    });
-
-                    setIsUploading(false)
-                    updateExpenses(data)
-
-                } catch (error) {
-                    setIsUploading(false)
-                    console.error('Error extracting file data:', error);
-                }
-            };
-
-            reader.readAsArrayBuffer(blob);
-        } catch (error) {
-            setIsUploading(false)
-            console.error('Error reading file:', error);
+    const getMimeType = async (uri: string): Promise<string> => {
+        const fileInfo = await FileSystem.getInfoAsync(uri, { size: true, md5: true });
+        if (fileInfo.exists) {
+            const contentUri = await FileSystem.getContentUriAsync(uri);
+            const extension = contentUri.split('.').pop()?.toLowerCase();
+            switch (extension) {
+                case 'pdf':
+                    return 'application/pdf';
+                case 'jpg':
+                case 'jpeg':
+                    return 'image/jpeg';
+                case 'png':
+                    return 'image/png';
+                default:
+                    return 'application/octet-stream';
+            }
+        } else {
+            throw new Error('File does not exist');
         }
     };
 
-    const [modalVisible, setModalVisible] = useState(false);
-    const [modalPhase, setModalPhase] = useState<'search' | 'order'>('search')
-    const [fileNameQuery, setFileNameQuery] = useState('')
+    const handleCreateFolder = async () => {
+        if (!user?.firstName || !user.lastName || !user.emailAddresses) {
+            return
+        }
+        try {
+            setIsUploading(true)
+            const data = await createFolder(user.emailAddresses[0].emailAddress, `${user.firstName} ${user.lastName}`, folderName)
+
+            if (!data) {
+                Toast.show('Something went wrong.', {
+                    duration: Toast.durations.SHORT,
+                    position: Constants.statusBarHeight + 20
+                });
+                setIsUploading(false)
+                return
+            }
+            Toast.show(data.actionDescription, {
+                duration: Toast.durations.SHORT,
+                position: Constants.statusBarHeight + 20
+            });
+
+            if (!data.folderCreated) {
+                setIsUploading(false)
+                return
+            }
+
+            updateFolders(data.folderName)
+            setIsUploading(false)
+            setNewFolderCreation(false)
+        } catch (error) {
+            setIsUploading(false)
+            console.error('Error creating folder:', error);
+        }
+    }
 
     useEffect(() => {
         void WebBrowser.warmUpAsync();
@@ -76,13 +109,105 @@ export default function ExpensesScreen() {
     }, [])
 
     useEffect(() => {
+
+        const handleFileUpload = async () => {
+            if (!fileSelection || !user?.emailAddresses) { return }
+            const res = await DocumentPicker.getDocumentAsync({ type: ["application/pdf", "image/jpeg", "image/png"] });
+            if (res.canceled) {
+                setFileSelection({ ...fileSelection, isSelectingFolder: true, folderSelected: undefined })
+                return;
+            }
+
+            let mime: MimeType
+            switch (res.assets[0].mimeType) {
+                case "application/pdf":
+                    mime = MimeType.APPLICATION_PDF
+                    break
+                case "image/jpeg":
+                    mime = MimeType.IMAGE_JPEG
+                    break
+                case "image/png":
+                    mime = MimeType.IMAGE_PNG
+                    break
+                default:
+                    return
+            }
+
+            try {
+                setIsUploading(true)
+                // Read the file content as Uint8Array using FileReader
+                const response = await fetch(res.assets[0].uri);
+                const blob = await response.blob();
+                const reader = new FileReader();
+
+                reader.onloadend = async () => {
+                    const arrayBuffer = reader.result as ArrayBuffer;
+                    const uint8Array = new Uint8Array(arrayBuffer);
+
+                    // Perform extractFileData
+                    if (!fileSelection.folderSelected) { return }
+                    try {
+                        const data = await extractFileData(user.emailAddresses[0].emailAddress, fileSelection.folderSelected, uint8Array, mime);
+                        if (!data?.file) {
+                            return
+                        }
+                        Toast.show('File data successfully extracted.', {
+                            duration: Toast.durations.SHORT,
+                            position: Constants.statusBarHeight + 20
+                        });
+
+                        setIsUploading(false)
+                        updateExpenses(data.file)
+
+                    } catch (error) {
+                        setIsUploading(false)
+                        console.error('Error extracting file data:', error);
+                    }
+                };
+
+                reader.readAsArrayBuffer(blob);
+            } catch (error) {
+                setIsUploading(false)
+                console.error('Error reading file:', error);
+            }
+        };
+
+        console.log(fileSelection)
+        if (!fileSelection?.folderSelected) {
+            return
+        }
+        if (fileSelection.fileOrigin === 'camera') {
+            router.push('/camera-screen')
+        }
+        if (fileSelection.fileOrigin === 'files') {
+            handleFileUpload()
+        }
+
+    }, [fileSelection])
+
+    useEffect(() => {
+        async function handleRetrieveFolders(emailAddress: string) {
+            const data = await retrieveFolders(emailAddress);
+            if (!data) { return }
+            setFolders(data)
+        }
         async function handleRetrieveExpenses() {
             const data = await retrieveExpenses();
-            if (!data) { return; }
-            setExpenses(data.infoList);
+            if (!data?.expenses) {
+                Toast.show('Error retrieving expenses.', {
+                    duration: Toast.durations.SHORT,
+                    position: Constants.statusBarHeight + 20
+                });
+                return;
+            }
+            setExpenses(data.expenses?.infoList);
         }
+        if (!user?.emailAddresses) {
+            return
+        }
+        handleRetrieveFolders(user.emailAddresses[0].emailAddress);
         handleRetrieveExpenses();
-    }, []);
+    }, [user?.emailAddresses]);
 
     const colorScheme = useColorScheme();
     const c = colorScheme === 'dark' ? Colors.dark : Colors.light;
@@ -93,14 +218,20 @@ export default function ExpensesScreen() {
             <View style={styles.headerContainer}>
                 <ThemedText type='defaultSemiBold'>My Expenses</ThemedText>
             </View>
-            {expenseData.length !== 0 ? (
+            {expenses.length !== 0 ? (
                 <ScrollView style={styles.scrollContainer}>
-                    {expenseData.map((expense, key) => (
+                    {expenses.filter((expense) => expense.data).map((expense, key) => (
                         <View key={key} style={{ ...styles.itemContainer, marginBottom: 6 }}>
                             <View style={styles.imageContainer}>
 
                                 {/**render expense snapshot here */}
-                                <Ionicons name="document-text-outline" size={72} style={{...styles.actionText, color: c.background}} />
+                                {expense.data!.previewUrl !== "" ? (
+                                    <Image style={{ width: 120, height: 168, zIndex: 1 }} source={{
+                                        uri: expense.data!.previewUrl
+                                    }} />
+                                ) : null}
+                                <Ionicons name="document-text-outline" size={72} style={{ ...styles.actionText, color: c.background, position: 'absolute', zIndex: 0 }} />
+
                                 <Link href="/expense-manager-screen" asChild>
                                     <TouchableOpacity
                                         onPress={() => updateSelectedExpense(expense)}
@@ -109,6 +240,7 @@ export default function ExpensesScreen() {
                                             position: 'absolute',
                                             left: 12,
                                             top: 12,
+                                            zIndex: 2
                                         }}
                                     >
                                         <Ionicons name="open-outline" size={24} style={styles.actionText} />
@@ -116,14 +248,14 @@ export default function ExpensesScreen() {
                                 </Link>
                                 <TouchableOpacity
                                     onPress={async () => {
-                                        if (!expense.objectUrl) { return }
-                                        await WebBrowser.openBrowserAsync(expense.objectUrl);
+                                        await WebBrowser.openBrowserAsync(expense.data!.objectUrl);
                                     }}
                                     style={{
                                         ...styles.floatingButton,
                                         position: 'absolute',
                                         left: 12,
                                         bottom: 12,
+                                        zIndex: 2
                                     }}
                                 >
                                     <Ionicons name="cloud-download-outline" size={24} style={styles.actionText} />
@@ -132,11 +264,21 @@ export default function ExpensesScreen() {
 
                             <View style={{ padding: 12, paddingLeft: 0, flexDirection: 'column', justifyContent: 'space-between' }}>
                                 <View>
-                                    <ThemedText style={{ fontSize: 12 }}>{expense.vendorName?.text}</ThemedText>
-                                    <ThemedText>{expense.total?.text}</ThemedText>
+                                    <ThemedText style={{ fontSize: 12 }}>{expense.data!.vendorName?.text}</ThemedText>
+                                    <ThemedText>{expense.data!.total?.text}</ThemedText>
                                 </View>
-                                <View style={{ ...styles.badge, alignSelf: 'flex-start' }}>
-                                    <ThemedText style={{ fontSize: 12 }}>Confidence: {computeAvgExpenseConfidence(expense)}%</ThemedText>
+                                <View style={{ gap: 6 }}>
+                                    <View style={{ ...styles.badge, alignSelf: 'flex-start' }}>
+                                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                            <Ionicons name="folder-outline" size={16} style={{ ...styles.actionText, marginRight: 6 }} />
+                                            <ThemedText style={{ fontSize: 12 }}>
+                                                {expense.folderName}
+                                            </ThemedText>
+                                        </View>
+                                    </View>
+                                    <View style={{ ...styles.badge, alignSelf: 'flex-start' }}>
+                                        <ThemedText style={{ fontSize: 12 }}>Confidence: {computeAvgExpenseConfidence(expense)}%</ThemedText>
+                                    </View>
                                 </View>
                             </View>
                             <View style={{
@@ -159,16 +301,20 @@ export default function ExpensesScreen() {
             <ThemedView style={styles.floatingContainer}>
                 {!isUploading ? (
                     <>
-                        <Link href="/camera-screen" asChild>
-                            <TouchableOpacity
-                                onPress={() => setModalVisible(true)}
-                                style={styles.floatingButton}
-                            >
-                                <Ionicons name="camera-outline" size={32} style={styles.actionText} />
-                            </TouchableOpacity>
-                        </Link>
                         <TouchableOpacity
-                            onPress={handleFileUpload}
+                            style={styles.floatingButton}
+                            onPress={() => setFileSelection({
+                                isSelectingFolder: true,
+                                fileOrigin: 'camera'
+                            })}
+                        >
+                            <Ionicons name="camera-outline" size={32} style={styles.actionText} />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            onPress={() => setFileSelection({
+                                isSelectingFolder: true,
+                                fileOrigin: 'files'
+                            })}
                             style={styles.floatingButton}
                         >
                             <Ionicons name="phone-portrait-outline" size={32} style={styles.actionText} />
@@ -180,64 +326,123 @@ export default function ExpensesScreen() {
                     </View>
                 )}
                 <TouchableOpacity
-                    onPress={() => setModalVisible(true)}
                     style={styles.floatingButton}
                 >
-                    <Ionicons name="options-outline" size={32} style={styles.actionText} />
+                    <Ionicons name="filter-outline" size={32} style={styles.actionText} />
                 </TouchableOpacity>
             </ThemedView>
-            {/* <Modal
+            {fileSelection ? (
+                <>
+                    <Modal
+                        transparent={true}
+                        animationType='slide'
+                        visible={fileSelection.isSelectingFolder}
+                        onRequestClose={() => {
+                            setFileSelection(null);
+                        }}
+                    >
+                        <View style={styles.modalContainer}>
+                            <ThemedView style={styles.modalView}>
+                                <View style={{
+                                    flexDirection: 'row',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    marginBottom: 12
+                                }}>
+                                    <ThemedText type='defaultSemiBold'>
+                                        Select a folder to store the expense
+                                    </ThemedText>
+                                    <TouchableOpacity
+                                        onPress={() => setFileSelection(null)}>
+                                        <Ionicons name='chevron-down-circle-outline' size={24} style={styles.actionText} />
+                                    </TouchableOpacity>
+                                </View>
+                                {folders.length !== 0 ? (
+                                    <>
+                                        <ScrollView style={styles.scrollContainer}>
+                                            {folders.map((folderName, key) => (
+                                                <TouchableOpacity
+                                                    key={key}
+                                                    onPress={async () => {
+                                                        setFileSelection({ ...fileSelection, isSelectingFolder: false, folderSelected: folderName })
+                                                    }}
+                                                    style={{ ...styles.itemContainer, marginBottom: 6, padding: 12, alignItems: 'center' }}
+                                                >
+                                                    <Ionicons name="folder-outline" size={24} color={c.text} />
+                                                    <Text numberOfLines={1} style={{ color: c.text, fontWeight: '500' }}>{folderName}</Text>
+                                                </TouchableOpacity>
+                                            ))}
+                                        </ScrollView>
+                                        <View style={styles.floatingContainer}>
+                                            <TouchableOpacity onPress={() => setNewFolderCreation(true)} style={styles.floatingButton}>
+                                                <Ionicons name="add-outline" size={32} style={styles.actionText} />
+                                            </TouchableOpacity>
+                                        </View>
+                                    </>
+                                ) : (
+                                    <View style={{
+                                        flex: 1,
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: 12,
+                                    }}>
+                                        <Ionicons name="folder-outline" size={72} style={{ color: c.border }} />
+                                        <TouchableOpacity onPress={() => setNewFolderCreation(true)} style={styles.primaryActionContainer}>
+                                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                                <Ionicons name="folder-outline" size={24} style={{ color: c.text, marginRight: 10 }} />
+                                                <Text style={{ color: c.text, fontWeight: '500' }}>Create new folder</Text>
+                                            </View>
+                                        </TouchableOpacity>
+                                    </View>
+                                )}
+                            </ThemedView>
+                        </View>
+                    </Modal>
+                </>
+            ) : null}
+            <Modal
                 transparent={true}
-                visible={modalVisible}
+                animationType='slide'
+                visible={newFolderCreation}
                 onRequestClose={() => {
-                    setModalVisible(!modalVisible);
-                }}>
-                <Animated.View style={[styles.modalContainer, {
-                    transform: [{
-                        translateY: slideAnim.interpolate({
-                            inputRange: [0, 1],
-                            outputRange: [500, 0],
-                        })
-                    }]
-                }]}>
-                    <ThemedView style={styles.modalView}>
+                    setNewFolderCreation(false);
+                }}
+            >
+                <View style={styles.modalContainer}>
+                    <ThemedView style={{ ...styles.modalView, height: "60%" }}>
                         <View style={{
-                            flexDirection: 'row',
+                            flex: 1,
                             alignItems: 'center',
-                            justifyContent: 'space-between',
-                            marginBottom: 12
+                            justifyContent: 'center',
+                            gap: 12,
                         }}>
-                            <ThemedText>
-                                Filter Expenses
-                                <ThemedText style={{ ...styles.actionText, fontSize: 12 }}> / Order</ThemedText>
-                            </ThemedText>
-                            <TouchableOpacity
-                                onPress={() => setModalVisible(!modalVisible)}>
-                                <Ionicons name='close-circle-outline' size={24} style={styles.actionText} />
-                            </TouchableOpacity>
-                        </View>
-                        <View style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            marginBottom: 12
-                        }}>
-                            <Text style={{ ...styles.actionText, fontSize: 12, width: '20%' }}>By File Name</Text>
+                            <ThemedText type='defaultSemiBold'>Specify folder name</ThemedText>
                             <TextInput
+                                placeholder='Folder name must be unique'
+                                placeholderTextColor={colorScheme === "dark" ? '#FFF' : '#6b7280'}
+                                value={folderName}
+                                onChangeText={setFolderName}
                                 style={styles.input}
                             />
-                        </View>
-                        <View style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                        }}>
-                            <Text style={{ ...styles.actionText, fontSize: 12, width: '20%' }}>By File Category</Text>
-                            <TextInput
-                                style={styles.input}
-                            />
+                            {isUploading ? (
+                                <View style={{ ...styles.secondaryActionContainer, backgroundColor: c.text }}>
+                                    <ActivityIndicator color={c.background} style={{ marginRight: 12 }} />
+                                    <Text style={{ color: c.background, fontWeight: '500' }}>Creating folder...</Text>
+                                </View>
+                            ) : (
+                                <>
+                                    <TouchableOpacity style={{ ...styles.secondaryActionContainer, backgroundColor: c.text }} onPress={handleCreateFolder}>
+                                        <Text style={{ color: c.background, fontWeight: '500' }}>Create new folder</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity style={styles.secondaryActionContainer} onPress={() => setNewFolderCreation(false)}>
+                                        <Text style={{ color: c.text, fontWeight: '500' }}>Cancel</Text>
+                                    </TouchableOpacity>
+                                </>
+                            )}
                         </View>
                     </ThemedView>
-                </Animated.View>
-            </Modal> */}
+                </View>
+            </Modal>
         </ThemedView>
     );
 }
@@ -273,9 +478,8 @@ const getStyles = (isDark: boolean) => {
             backgroundColor: c.secondary,
             alignItems: 'center',
             justifyContent: 'center',
-            width: 96,
-            height: 144,
-            padding: 12,
+            width: 120,
+            height: 168,
         },
         badge: {
             flexDirection: 'row',
@@ -301,27 +505,49 @@ const getStyles = (isDark: boolean) => {
         },
         modalContainer: {
             flex: 1,
-            justifyContent: 'flex-end',
+            flexDirection: 'column',
+            justifyContent: 'center',
             alignItems: 'center',
         },
         modalView: {
+            position: 'absolute',
+            bottom: 0,
             width: '100%',
-            height: '40%',
-            backgroundColor: isDark ? c.secondary : c.background,
+            height: '60%',
+            backgroundColor: c.background,
             borderTopLeftRadius: 18,
             borderTopRightRadius: 18,
             padding: 18,
-            shadowColor: "#000000",
+            shadowColor: c.text,
             elevation: 6,
         },
         input: {
             width: '80%',
+            margin: 10,
             borderWidth: 1,
             paddingLeft: 15,
             padding: 10,
             borderRadius: 5,
             borderColor: c.border,
             color: c.text
+        },
+        primaryActionContainer: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingHorizontal: 12,
+            paddingVertical: 12,
+            borderRadius: 50,
+            borderWidth: 1,
+            borderColor: c.border
+        },
+        secondaryActionContainer: {
+            backgroundColor: c.secondary,
+            borderRadius: 50,
+            paddingVertical: 12,
+            paddingHorizontal: 24,
+            flexDirection: 'row',
+            justifyContent: 'center'
         },
         actionText: {
             color: c.text,

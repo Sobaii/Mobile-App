@@ -1,21 +1,32 @@
 import { create } from 'zustand';
 import { persist, combine, createJSONStorage } from 'zustand/middleware';
-import { ExtractResponse } from '../stubs/ocr-service-dev/ocr_service_pb';
+import { ExtractFileResponse, FolderSearchResponse, ExpenseItem } from '../stubs/ocr-service-dev/ocr_service_pb';
+
+type FileSelectionState = {
+    isSelectingFolder: boolean
+    fileOrigin: 'camera' | 'files'
+    folderSelected?: string
+} | null
 
 type ExpenseState = {
-    data: ExtractResponse.AsObject[];
-    selectedExpense?: ExtractResponse.AsObject;
+    fileSelection: FileSelectionState
+    folders: string[];
+    expenses: ExpenseItem.AsObject[];
+    selectedExpense?: ExpenseItem.AsObject;
 }
 
 export const useExpenseStore = create(
     combine(
-        { data: [] } as ExpenseState,
+        { fileSelection: null, expenses: [], folders: [] } as ExpenseState,
         (set) => ({
-            setExpenses: (newData: ExtractResponse.AsObject[]) => set(() => ({data: newData})),
-            
-            updateExpenses: (newData: ExtractResponse.AsObject) => set((state) => ({data: [...state.data, newData]})),
-        
-            updateSelectedExpense: (target: ExtractResponse.AsObject) => set (() => ({selectedExpense: target}))
+            setFileSelection: (newData: FileSelectionState) => set(() => ({fileSelection: newData})),
+
+            setFolders: (newData: FolderSearchResponse.AsObject) => set(() => ({folders: newData.foldersList})),
+            updateFolders: (newData: string) => set((state) => ({folders: [...state.folders, newData]})),
+
+            setExpenses: (newData: ExpenseItem.AsObject[]) => set(() => ({expenses: newData})),
+            updateExpenses: (newData: ExpenseItem.AsObject) => set((state) => ({expenses: [...state.expenses, newData]})),
+            updateSelectedExpense: (target: ExpenseItem.AsObject) => set (() => ({selectedExpense: target}))
         })
     )
 );

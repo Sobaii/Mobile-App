@@ -2,59 +2,14 @@ import { StyleSheet, useColorScheme } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { View, TouchableOpacity, Text } from 'react-native';
-import { Link, router } from 'expo-router';
+import { router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import Constants from 'expo-constants';
-import * as DocumentPicker from 'expo-document-picker';
-import { extractFileData } from '@/lib/ocr-service/callWrapper';
-import { useExpenseStore } from '@/lib/store';
-import Toast from 'react-native-root-toast';
 import { Colors } from '@/constants/Colors';
 import Ionicons from '@expo/vector-icons/Ionicons';
 
 export default function DashboardScreen() {
-  const updateExpenses = useExpenseStore((state) => state.updateExpenses)
   const { user } = useUser();
-
-  const handleFileUpload = async () => {
-    const res = await DocumentPicker.getDocumentAsync({ type: 'application/pdf' });
-    if (res.canceled) {
-      return;
-    }
-
-    try {
-      // Read the file content as Uint8Array using FileReader
-      const response = await fetch(res.assets[0].uri);
-      const blob = await response.blob();
-      const reader = new FileReader();
-
-      reader.onloadend = async () => {
-        const arrayBuffer = reader.result as ArrayBuffer;
-        const uint8Array = new Uint8Array(arrayBuffer);
-
-        // Perform extractFileData
-        try {
-          const data = await extractFileData(uint8Array);
-          if (!data) {
-            return
-          }
-          Toast.show('File data successfully extracted.', {
-            duration: Toast.durations.SHORT,
-            position: Constants.statusBarHeight + 20
-          });
-
-          updateExpenses(data)
-
-        } catch (error) {
-          console.error('Error extracting file data:', error);
-        }
-      };
-
-      reader.readAsArrayBuffer(blob);
-    } catch (error) {
-      console.error('Error reading file:', error);
-    }
-  };
 
   const colorScheme = useColorScheme()
   const styles = getStyles(colorScheme === 'dark')
@@ -66,22 +21,6 @@ export default function DashboardScreen() {
           <ThemedText type='title'>Sobaii</ThemedText>
         </View>
         <View style={{ ...styles.divider, alignSelf: 'center' }} />
-        <Link href="/camera-screen" asChild>
-          <TouchableOpacity style={styles.actionButton}>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Ionicons name="camera-outline" size={24} style={{ ...styles.actionText, marginRight: 10 }} />
-              <Text style={styles.actionText}>Upload expenses with camera</Text>
-            </View>
-            <Ionicons name="chevron-forward-outline" size={24} style={styles.actionText} />
-          </TouchableOpacity>
-        </Link>
-        <TouchableOpacity onPress={handleFileUpload} style={styles.actionButton}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Ionicons name="phone-portrait-outline" size={24} style={{ ...styles.actionText, marginRight: 10 }} />
-            <Text style={styles.actionText}>Upload expenses from device</Text>
-          </View>
-          <Ionicons name="chevron-forward-outline" size={24} style={styles.actionText} />
-        </TouchableOpacity>
         <TouchableOpacity onPress={() => router.push('/expenses')} style={styles.actionButton}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Ionicons name="file-tray-outline" size={24} style={{ ...styles.actionText, marginRight: 10 }} />
@@ -126,7 +65,7 @@ const getStyles = (isDark: boolean) => {
       justifyContent: 'center',
     },
     badge: {
-      flexDirection: 'row',      
+      flexDirection: 'row',
       alignItems: 'center',
       backgroundColor: c.secondary,
       paddingHorizontal: 12,

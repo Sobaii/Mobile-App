@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useExpenseStore } from '@/lib/store';
 import { Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useCameraPermissions, CameraView } from 'expo-camera';
 import { Link, router } from 'expo-router';
@@ -8,6 +9,13 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 
 export default function CameraExample() {
     const [permission, requestPermission] = useCameraPermissions();
+    const {
+        fileSelection,
+        setFileSelection
+    } = useExpenseStore((state) => ({
+        fileSelection: state.fileSelection,
+        setFileSelection: state.setFileSelection
+    }))
 
     useEffect(() => {
         (async () => {
@@ -32,7 +40,14 @@ export default function CameraExample() {
             <ThemedView style={styles.screenContainer}>
                 <CameraView style={styles.camera}>
                     <ThemedView style={styles.navContainer}>
-                        <TouchableOpacity onPress={() => router.back()}>
+                        <TouchableOpacity onPress={() => {
+                            if (!fileSelection) {
+                                console.error('state error')
+                                return
+                            }
+                            setFileSelection({ ...fileSelection, isSelectingFolder: true, folderSelected: undefined })
+                            router.back()
+                        }}>
                             <Ionicons name="arrow-back-outline" size={64} color={'#fff'} />
                         </TouchableOpacity>
                     </ThemedView>

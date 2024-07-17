@@ -12,7 +12,7 @@ export default function ExpenseManagerScreen() {
     const colorScheme = useColorScheme();
     const styles = getStyles(colorScheme === 'dark');
 
-    if (!selectedExpense) {
+    if (!selectedExpense?.data) {
         return (
             <View style={styles.emptyContainer}>
                 <Text>No Expense Selected</Text>
@@ -24,7 +24,7 @@ export default function ExpenseManagerScreen() {
         <>
             <Stack.Screen options={{ title: 'Expense Manager' }} />
             <ScrollView style={styles.container}>
-                {Object.entries(selectedExpense)
+                {Object.entries(selectedExpense.data)
                     .map(([key, value]) => {
                         const expenseValue = value as ExpenseField.AsObject
                         return (
