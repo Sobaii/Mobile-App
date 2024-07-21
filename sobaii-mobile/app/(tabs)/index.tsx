@@ -7,9 +7,26 @@ import { useUser } from '@clerk/clerk-expo';
 import Constants from 'expo-constants';
 import { Colors } from '@/constants/Colors';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useEffect } from 'react';
+import { retrieveUser } from '@/lib/auth-service/callWrapper';
 
 export default function DashboardScreen() {
   const { user } = useUser();
+
+  useEffect(() => {
+    const handleRetrieveUser = async (userId: string | undefined) => {
+      if (!userId) {
+        router.replace('/')
+      } else {
+        const res = await retrieveUser(userId)
+        console.log(res)
+        if (!res?.isRegisteredUser) {
+          router.replace('/')
+        }
+      }
+    }
+    handleRetrieveUser(user?.id)
+  }, [user])
 
   const colorScheme = useColorScheme()
   const styles = getStyles(colorScheme === 'dark')
