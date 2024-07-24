@@ -45,12 +45,12 @@ export default function ExpensesScreen() {
     const [folderName, setFolderName] = useState('');
 
     const handleCreateFolder = async () => {
-        if (!user?.firstName || !user.lastName || !user.emailAddresses) {
+        if (!user?.firstName || !user.lastName || !user.id) {
             return
         }
         try {
             setIsUploading(true)
-            const data = await createFolder(user.emailAddresses[0].emailAddress, `${user.firstName} ${user.lastName}`, folderName)
+            const data = await createFolder(user.id, folderName)
 
             if (!data) {
                 Toast.show('Something went wrong.', {
@@ -89,7 +89,7 @@ export default function ExpensesScreen() {
     useEffect(() => {
 
         const handleFileUpload = async () => {
-            if (!fileSelection || !user?.emailAddresses) { return }
+            if (!fileSelection || !user?.id) { return }
             const res = await DocumentPicker.getDocumentAsync({ type: ["application/pdf", "image/jpeg", "image/png"] });
             if (res.canceled) {
                 setFileSelection({ ...fileSelection, isSelectingFolder: true, folderSelected: undefined })
@@ -125,7 +125,7 @@ export default function ExpensesScreen() {
                     // Perform extractFileData
                     if (!fileSelection.folderSelected) { return }
                     try {
-                        const data = await extractFileData(user.emailAddresses[0].emailAddress, fileSelection.folderSelected, uint8Array, mime);
+                        const data = await extractFileData(user.id, fileSelection.folderSelected, uint8Array, mime);
                         if (!data?.file) {
                             return
                         }
@@ -164,13 +164,13 @@ export default function ExpensesScreen() {
     }, [fileSelection])
 
     useEffect(() => {
-        async function handleRetrieveFolders(emailAddress: string) {
-            const data = await retrieveFolders(emailAddress);
+        async function handleRetrieveFolders(userId: string) {
+            const data = await retrieveFolders(userId);
             if (!data) { return }
             setFolders(data)
         }
-        async function handleRetrieveExpenses() {
-            const data = await retrieveExpenses();
+        async function handleRetrieveExpenses(userId: string) {
+            const data = await retrieveExpenses(userId);
             if (!data?.expenses) {
                 Toast.show('Error retrieving expenses.', {
                     duration: Toast.durations.SHORT,
@@ -180,12 +180,12 @@ export default function ExpensesScreen() {
             }
             setExpenses(data.expenses?.infoList);
         }
-        if (!user?.emailAddresses) {
+        if (!user?.id) {
             return
         }
-        handleRetrieveFolders(user.emailAddresses[0].emailAddress);
-        handleRetrieveExpenses();
-    }, [user?.emailAddresses]);
+        handleRetrieveFolders(user.id);
+        handleRetrieveExpenses(user.id);
+    }, [user?.id]);
 
     const colorScheme = useColorScheme();
     const c = colorScheme === 'dark' ? Colors.dark : Colors.light;
