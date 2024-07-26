@@ -47,10 +47,10 @@ export default function ProfileScreen() {
       <View style={styles.userContainer}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <Ionicons name="person-circle" size={48} style={{ ...styles.itemDescription, marginRight: 10 }} />
-          <View style={{ flexDirection: 'column' }}>
-            <ThemedText style={{ fontWeight: '500' }}>{user?.firstName} {user?.lastName}</ThemedText>
+          <View style={{ flexDirection: 'column', width: '70%' }}>
+            <ThemedText numberOfLines={1} style={{ fontWeight: '500' }}>{user?.firstName} {user?.lastName}</ThemedText>
             {user?.emailAddresses && (
-              <ThemedText style={{ fontSize: 12 }}>{user.emailAddresses[0].emailAddress}</ThemedText>
+              <ThemedText numberOfLines={1} style={{ fontSize: 12 }}>{user.emailAddresses[0].emailAddress}</ThemedText>
             )}
           </View>
         </View>
