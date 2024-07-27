@@ -1,5 +1,5 @@
 import { OcrServiceClient } from "../stubs/ocr-service-dev/Ocr_serviceServiceClientPb";
-import { FolderCreationRequest, FolderCreationResponse, FolderSearchRequest, FolderSearchResponse, ExtractFileRequest, SearchFileRequest, ExtractFileResponse, MimeType, SearchFileResponse } from "../stubs/ocr-service-dev/ocr_service_pb";
+import { FolderCreationRequest, FolderCreationResponse, FolderSearchRequest, FolderSearchResponse, ExtractFileRequest, SearchFileRequest, ModifyExpenseFieldRequest, ExtractFileResponse, MimeType, SearchFileResponse, ModifyExpenseFieldResponse } from "../stubs/ocr-service-dev/ocr_service_pb";
 
 const client = new OcrServiceClient('http://localhost:50052', null, null)
 
@@ -73,6 +73,27 @@ export async function retrieveExpenses(userId: string): Promise<SearchFileRespon
       } else {
         resolve(response.toObject())
       }
+    })
+  })
+
+}
+
+export async function modifyExpenseField(userId: string, expenseId: number, fieldType: string, fieldText: string): Promise<ModifyExpenseFieldResponse.AsObject | null> {
+  
+  return new Promise((resolve, reject) => {
+    const request = new ModifyExpenseFieldRequest()
+    request
+    .setUserId(userId)
+    .setExpenseId(expenseId)
+    .setFieldType(fieldType)
+    .setFieldText(fieldText)
+  
+    client.modifyExpenseField(request, {}, (err, response: ModifyExpenseFieldResponse) => {
+       if (err) {
+          reject(null)
+        } else {
+          resolve(response.toObject())
+        }
     })
   })
 

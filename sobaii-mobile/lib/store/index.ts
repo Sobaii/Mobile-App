@@ -25,7 +25,7 @@ export const useExpenseStore = create(
             updateFolders: (newData: string) => set((state) => ({folders: [...state.folders, newData]})),
 
             setExpenses: (newData: ExpenseItem.AsObject[]) => set(() => ({expenses: newData})),
-            updateExpenses: (newData: ExpenseItem.AsObject) => set((state) => ({expenses: [...state.expenses, newData]})),
+            insertExpense: (newData: ExpenseItem.AsObject) => set((state) => ({expenses: [...state.expenses, newData]})),
             updateSelectedExpense: (target: ExpenseItem.AsObject) => set (() => ({selectedExpense: target}))
         })
     )

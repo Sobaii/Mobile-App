@@ -1,4 +1,4 @@
-import { Modal, StyleSheet, TouchableOpacity, useColorScheme, Text, View, ScrollView, ActivityIndicator, TextInput, Image } from 'react-native';
+import { Modal, StyleSheet, TouchableOpacity, useColorScheme, Text, View, ScrollView, ActivityIndicator, TextInput, Image, Keyboard } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import * as WebBrowser from 'expo-web-browser'
 import * as DocumentPicker from 'expo-document-picker';
@@ -21,7 +21,7 @@ export default function ExpensesScreen() {
     const {
         expenses,
         setExpenses,
-        updateExpenses,
+        insertExpense,
         updateSelectedExpense,
         fileSelection,
         setFileSelection,
@@ -31,7 +31,7 @@ export default function ExpensesScreen() {
     } = useExpenseStore((state) => ({
         expenses: state.expenses,
         setExpenses: state.setExpenses,
-        updateExpenses: state.updateExpenses,
+        insertExpense: state.insertExpense,
         updateSelectedExpense: state.updateSelectedExpense,
         fileSelection: state.fileSelection,
         setFileSelection: state.setFileSelection,
@@ -45,6 +45,7 @@ export default function ExpensesScreen() {
     const [folderName, setFolderName] = useState('');
 
     const handleCreateFolder = async () => {
+        Keyboard.dismiss()
         if (!user?.firstName || !user.lastName || !user.id) {
             return
         }
@@ -135,7 +136,8 @@ export default function ExpensesScreen() {
                         });
 
                         setIsUploading(false)
-                        updateExpenses(data.file)
+                        console.log(data.file)
+                        insertExpense(data.file)
 
                     } catch (error) {
                         setIsUploading(false)
@@ -242,7 +244,7 @@ export default function ExpensesScreen() {
 
                             <View style={{ padding: 12, paddingLeft: 0, flexDirection: 'column', justifyContent: 'space-between' }}>
                                 <View>
-                                    <ThemedText style={{ fontSize: 12 }}>{expense.data!.vendorName?.text}</ThemedText>
+                                    <ThemedText numberOfLines={1} style={{ fontSize: 12 }}>{expense.data!.vendorName?.text}</ThemedText>
                                     <ThemedText>{expense.data!.total?.text}</ThemedText>
                                 </View>
                                 <View style={{ gap: 6 }}>

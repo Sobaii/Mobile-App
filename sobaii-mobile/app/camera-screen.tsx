@@ -21,11 +21,11 @@ export default function CameraExample() {
     const {
         fileSelection,
         setFileSelection,
-        updateExpenses
+        insertExpense
     } = useExpenseStore((state) => ({
         fileSelection: state.fileSelection,
         setFileSelection: state.setFileSelection,
-        updateExpenses: state.updateExpenses
+        insertExpense: state.insertExpense
     }))
 
     useEffect(() => {
@@ -83,7 +83,7 @@ export default function CameraExample() {
                     duration: Toast.durations.SHORT,
                     position: Constants.statusBarHeight + 20
                 });
-                updateExpenses(data.file)
+                insertExpense(data.file)
 
             } catch (error) {
                 console.error('Error extracting file data:', error);

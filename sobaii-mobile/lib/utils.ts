@@ -9,7 +9,7 @@ export function computeAvgExpenseConfidence(expense: ExpenseItem.AsObject): numb
             continue
         }
         const field = expense.data[key as keyof FileExtract.AsObject];
-        if(!field || field instanceof String || typeof field === 'string') {
+        if(!field || field instanceof String || typeof field === 'string' || field instanceof Number || typeof field === 'number') {
             continue
         }
         if((field.text === "" && field.confidence === 0)) {
