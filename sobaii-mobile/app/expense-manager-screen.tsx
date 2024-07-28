@@ -1,5 +1,5 @@
 import { View, Text, ScrollView, StyleSheet, useColorScheme, TouchableOpacity, Modal, TextInput, Keyboard } from "react-native";
-import { Stack } from "expo-router";
+import { router, Stack } from "expo-router";
 import { useExpenseStore } from "@/lib/store";
 import { Colors } from "@/constants/Colors";
 import { ThemedText } from "@/components/ThemedText";
@@ -7,7 +7,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { ExpenseField, ExpenseItem } from "@/lib/stubs/ocr-service-dev/ocr_service_pb";
 import { useState } from "react";
 import { ThemedView } from "@/components/ThemedView";
-import { modifyExpenseField } from "@/lib/ocr-service/callWrapper";
+import { deleteExpense, modifyExpenseField } from "@/lib/ocr-service/callWrapper";
 import { useUser } from "@clerk/clerk-expo";
 import Toast from "react-native-root-toast";
 import Constants from "expo-constants";
@@ -25,7 +25,7 @@ export default function ExpenseManagerScreen() {
         setExpenses: state.setExpenses,
         updateSelectedExpense: state.updateSelectedExpense
     }));
-
+    const [isOnExpenseOptions, setIsOnExpenseOptions] = useState(false)
     const [isModifyingExpense, setIsModifyingExpense] = useState(false)
     const [selectedExpenseField, setSelectedExpenseField] = useState<{
         objectFieldType: string,
@@ -83,6 +83,33 @@ export default function ExpenseManagerScreen() {
         })
         setExpenses(updatedExpenses)
         updateSelectedExpense(modifiedExpense)
+
+        Toast.show(data.actionDescription, {
+            duration: Toast.durations.SHORT,
+            position: Constants.statusBarHeight + 20
+        });
+    }
+
+    const handleDeleteExpense = async () => {
+
+        if (!selectedExpense.data?.expenseId || !user?.id) {
+            return
+        }
+        const data = await deleteExpense(user.id, selectedExpense.data.expenseId)
+        if (!data) {
+            Toast.show('Something went wrong.', {
+                duration: Toast.durations.SHORT,
+                position: Constants.statusBarHeight + 20
+            });
+            return
+        }
+
+        const updatedExpenses: ExpenseItem.AsObject[] = expenses.filter((expense) => expense.data?.expenseId !== data.expenseId)
+
+        setExpenses(updatedExpenses)
+        setIsOnExpenseOptions(false)
+        router.back()
+        updateSelectedExpense(undefined)
 
         Toast.show(data.actionDescription, {
             duration: Toast.durations.SHORT,
@@ -160,6 +187,48 @@ export default function ExpenseManagerScreen() {
                     </ThemedView>
                 </View>
             </Modal>
+            <Modal
+                transparent={true}
+                animationType="slide"
+                visible={isOnExpenseOptions}
+                onRequestClose={() => {
+                    setIsOnExpenseOptions(false);
+                }}
+            >
+                <View style={styles.modalContainer}>
+                    <ThemedView style={{ ...styles.modalView, height: '30%' }}>
+                        <View style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            marginBottom: 12
+                        }}>
+                            <ThemedText type="defaultSemiBold">
+                                Expense options
+                            </ThemedText>
+                            <TouchableOpacity onPress={() => setIsOnExpenseOptions(false)}>
+                                <Ionicons name='chevron-down-circle-outline' size={24} style={styles.actionText} />
+                            </TouchableOpacity>
+                        </View>
+                        <View style={{ flex: 1, justifyContent: 'center', gap: 12 }}>
+                            <TouchableOpacity style={{ ...styles.secondaryActionContainer, backgroundColor: c.text }}>
+                                <Text style={{ color: c.background, fontWeight: '500' }}>Export as CSV</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={{ ...styles.secondaryActionContainer, backgroundColor: c.destructive }} onPress={handleDeleteExpense}>
+                                <Text style={{ color: c.background, fontWeight: '500' }}>Delete expense</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </ThemedView>
+                </View>
+            </Modal>
+            <ThemedView style={styles.floatingContainer}>
+                <TouchableOpacity
+                    onPress={() => setIsOnExpenseOptions(true)}
+                    style={styles.floatingButton}
+                >
+                    <Ionicons name="options-outline" size={32} style={styles.actionText} />
+                </TouchableOpacity>
+            </ThemedView>
         </>
     );
 }
@@ -185,6 +254,21 @@ const getStyles = (isDark: boolean) => {
             borderWidth: 1,
             borderColor: c.border,
             gap: 12
+        },
+        floatingContainer: {
+            backgroundColor: 'transparent',
+            position: "absolute",
+            right: Constants.statusBarHeight,
+            bottom: Constants.statusBarHeight,
+            zIndex: 100,
+            gap: Constants.statusBarHeight
+        },
+        floatingButton: {
+            backgroundColor: c.secondary,
+            borderRadius: 50,
+            padding: 12,
+            shadowColor: "#000000",
+            elevation: 3,
         },
         info: {
             flexDirection: 'row',

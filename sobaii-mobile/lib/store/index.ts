@@ -26,7 +26,7 @@ export const useExpenseStore = create(
 
             setExpenses: (newData: ExpenseItem.AsObject[]) => set(() => ({expenses: newData})),
             insertExpense: (newData: ExpenseItem.AsObject) => set((state) => ({expenses: [...state.expenses, newData]})),
-            updateSelectedExpense: (target: ExpenseItem.AsObject) => set (() => ({selectedExpense: target}))
+            updateSelectedExpense: (target: ExpenseItem.AsObject | undefined) => set (() => ({selectedExpense: target}))
         })
     )
 );
