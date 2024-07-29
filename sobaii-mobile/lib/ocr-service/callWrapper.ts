@@ -78,6 +78,27 @@ export async function retrieveExpenses(userId: string): Promise<SearchFileRespon
 
 }
 
+export async function sortExpensesByFieldSimilarity(userId: string, fieldType: string, query: string): Promise<SearchFileResponse.AsObject | null> {
+
+ return new Promise((resolve, reject) => {
+    const request = new SearchFileRequest()
+    request
+    .setUserId(userId)
+    .setFolderName("")
+    .setIndex(fieldType)
+    .setQuery(query)
+
+    client.searchFileData(request, {}, (err, response: SearchFileResponse) => {
+      if (err) {
+        reject(null)
+      } else {
+        resolve(response.toObject())
+      }
+    })
+  }) 
+
+}
+
 export async function modifyExpenseField(userId: string, expenseId: number, fieldType: string, fieldText: string): Promise<ModifyExpenseFieldResponse.AsObject | null> {
   
   return new Promise((resolve, reject) => {

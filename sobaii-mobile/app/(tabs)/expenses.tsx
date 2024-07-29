@@ -8,7 +8,7 @@ import { computeAvgExpenseConfidence } from '@/lib/utils';
 import { Link, router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import { useEffect, useState } from 'react';
-import { createFolder, extractFileData, retrieveExpenses, retrieveFolders } from '@/lib/ocr-service/callWrapper';
+import { createFolder, extractFileData, retrieveExpenses, retrieveFolders, sortExpensesByFieldSimilarity } from '@/lib/ocr-service/callWrapper';
 import { MimeType } from '@/lib/stubs/ocr-service-dev/ocr_service_pb';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Colors } from '@/constants/Colors';
@@ -24,7 +24,9 @@ export default function ExpensesScreen() {
         insertExpense,
         updateSelectedExpense,
         fileSelection,
+        expensesFiltration,
         setFileSelection,
+        setExpensesFiltration,
         folders,
         setFolders,
         updateFolders
@@ -34,6 +36,8 @@ export default function ExpensesScreen() {
         insertExpense: state.insertExpense,
         updateSelectedExpense: state.updateSelectedExpense,
         fileSelection: state.fileSelection,
+        expensesFiltration: state.expensesFiltration,
+        setExpensesFiltration: state.setExpensesFiltration,
         setFileSelection: state.setFileSelection,
         folders: state.folders,
         setFolders: state.setFolders,
@@ -43,6 +47,7 @@ export default function ExpensesScreen() {
     const [isUploading, setIsUploading] = useState(false)
     const [newFolderCreation, setNewFolderCreation] = useState(false);
     const [folderName, setFolderName] = useState('');
+    const [fieldSearchInput, setFieldSearchInput] = useState('');
 
     const handleCreateFolder = async () => {
         Keyboard.dismiss()
@@ -189,6 +194,43 @@ export default function ExpensesScreen() {
         handleRetrieveExpenses(user.id);
     }, [user?.id]);
 
+    useEffect(() => {
+        async function handleFieldSearch(userId: string, fieldType: string, query: string) {
+            const data = await sortExpensesByFieldSimilarity(userId, fieldType, query)
+            if (!data?.expenses) {
+                Toast.show('Error retrieving expenses.', {
+                    duration: Toast.durations.SHORT,
+                    position: Constants.statusBarHeight + 20
+                });
+                return;
+            }
+            setExpenses(data.expenses?.infoList);
+        }
+        async function handleRetrieveExpenses(userId: string) {
+            const data = await retrieveExpenses(userId);
+            if (!data?.expenses) {
+                Toast.show('Error retrieving expenses.', {
+                    duration: Toast.durations.SHORT,
+                    position: Constants.statusBarHeight + 20
+                });
+                return;
+            }
+            setExpenses(data.expenses?.infoList);
+        }
+        const delayDebounceFn = setTimeout(() => {
+            if (!user?.id) {
+                return
+            }
+            if (fieldSearchInput) {
+                handleFieldSearch(user.id, "VENDOR_NAME", fieldSearchInput)
+            } else {
+                handleRetrieveExpenses(user.id);
+            }
+            setExpensesFiltration({ ...expensesFiltration, isFilterActive: (fieldSearchInput) ? true : false })
+        }, 300);
+        return () => clearTimeout(delayDebounceFn);
+    }, [fieldSearchInput])
+
     const colorScheme = useColorScheme();
     const c = colorScheme === 'dark' ? Colors.dark : Colors.light;
     const styles = getStyles(colorScheme === 'dark');
@@ -306,9 +348,10 @@ export default function ExpensesScreen() {
                     </View>
                 )}
                 <TouchableOpacity
-                    style={styles.floatingButton}
+                    style={{ ...styles.floatingButton, backgroundColor: (expensesFiltration.isFilterActive) ? c.primary : c.secondary }}
+                    onPress={() => { setExpensesFiltration({ ...expensesFiltration, isFilterOptionsOpen: true }) }}
                 >
-                    <Ionicons name="filter-outline" size={32} style={styles.actionText} />
+                    <Ionicons name="filter-outline" size={32} style={{ ...styles.actionText, color: (expensesFiltration.isFilterActive) ? c.background : c.text }} />
                 </TouchableOpacity>
             </ThemedView>
             {fileSelection ? (
@@ -420,6 +463,43 @@ export default function ExpensesScreen() {
                                 </>
                             )}
                         </View>
+                    </ThemedView>
+                </View>
+            </Modal>
+            <Modal
+                transparent={true}
+                statusBarTranslucent={true}
+                animationType='slide'
+                visible={expensesFiltration.isFilterOptionsOpen}
+                onRequestClose={() => {
+                    setExpensesFiltration({ ...expensesFiltration, isFilterOptionsOpen: true })
+                }}
+            >
+                <View style={styles.modalContainer}>
+                    <ThemedView style={styles.modalView}>
+                        <View style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            marginBottom: 12
+                        }}>
+                            {/** will be an option to toggle between sorting and filtering expenses */}
+                            <ThemedText type='defaultSemiBold'>
+                                Sort expenses
+                            </ThemedText>
+                            <TouchableOpacity
+                                onPress={() => setExpensesFiltration({ ...expensesFiltration, isFilterOptionsOpen: false })}>
+                                <Ionicons name='chevron-down-circle-outline' size={24} style={styles.actionText} />
+                            </TouchableOpacity>
+                        </View>
+                        <ThemedText>
+                            By expense field similarity
+                        </ThemedText>
+                        <TextInput
+                            value={fieldSearchInput}
+                            onChangeText={setFieldSearchInput}
+                            style={styles.input}
+                        />
                     </ThemedView>
                 </View>
             </Modal>

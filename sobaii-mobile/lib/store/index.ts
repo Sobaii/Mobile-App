@@ -8,8 +8,14 @@ type FileSelectionState = {
     folderSelected?: string
 } | null
 
+type ExpensesFiltration = {
+    isFilterOptionsOpen: boolean
+    isFilterActive: boolean
+}
+
 type ExpenseState = {
-    fileSelection: FileSelectionState
+    fileSelection: FileSelectionState;
+    expensesFiltration: ExpensesFiltration;
     folders: string[];
     expenses: ExpenseItem.AsObject[];
     selectedExpense?: ExpenseItem.AsObject;
@@ -17,9 +23,11 @@ type ExpenseState = {
 
 export const useExpenseStore = create(
     combine(
-        { fileSelection: null, expenses: [], folders: [] } as ExpenseState,
+        { fileSelection: null, expensesFiltration: { isFilterOptionsOpen: false, isFilterActive: false}, expenses: [], folders: [] } as ExpenseState,
         (set) => ({
             setFileSelection: (newData: FileSelectionState) => set(() => ({fileSelection: newData})),
+
+            setExpensesFiltration: (newData: ExpensesFiltration) => set(() => ({expensesFiltration: newData})),
 
             setFolders: (newData: FolderSearchResponse.AsObject) => set(() => ({folders: newData.foldersList})),
             updateFolders: (newData: string) => set((state) => ({folders: [...state.folders, newData]})),
